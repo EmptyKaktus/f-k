@@ -4,12 +4,6 @@ from PyQt5.QtGui import QPixmap
 import sys
 import os
 
-geocoder_request = "https://static-maps.yandex.ru/1.x/?ll=133.251106%2C-29.603809&spn=22,22&l=map"
-response = requests.get(geocoder_request)
-map_file = "map.png"
-with open(map_file, "wb") as file:
-    file.write(response.content)
-
 
 class MyWidget(QMainWindow):
     def __init__(self):
@@ -20,17 +14,46 @@ class MyWidget(QMainWindow):
         self.setGeometry(500, 200, 600, 600)
         self.setWindowTitle('Карта')
 
-        self.pixmap = QPixmap(map_file)
+        self.inputX = QLineEdit('37.530822', self)
+        self.inputX.move(60, 470)
+        self.inputX.resize(85, 30)
+
+        self.inputY = QLineEdit('2C55.702952', self)
+        self.inputY.move(160, 470)
+        self.inputY.resize(85, 30)
+
+        self.inputSPN = QLineEdit('0,0.003', self)
+        self.inputSPN.move(60, 530)
+        self.inputSPN.resize(100, 30)
+
+        self.button_1 = QPushButton(self)
+        self.button_1.move(180, 530)
+        self.button_1.setText('Отобразить')
+        self.button_1.clicked.connect(self.getImage)
+
         self.image = QLabel(self)
         self.image.move(0, 0)
         self.image.resize(600, 450)
+        self.getImage()
+
+    def getImage(self):
+        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.inputX.text()}%{self.inputY.text()}&spn={self.inputSPN.text()}&l=map"
+        response = requests.get(map_request)
+
+        if not response:
+            print("Ошибка выполнения запроса:")
+            print(map_request)
+            print("Http статус:", response.status_code, "(", response.reason, ")")
+            sys.exit(1)
+
+        self.map_file = "map.png"
+        with open(self.map_file, "wb") as file:
+            file.write(response.content)
+        self.pixmap = QPixmap(self.map_file)
         self.image.setPixmap(self.pixmap)
 
-    def map(self):
-        pass
-
-    def coor(self):
-        pass
+    def closeEvent(self, event):
+        os.remove(self.map_file)
 
 
 if __name__ == '__main__':
@@ -38,5 +61,3 @@ if __name__ == '__main__':
     ex = MyWidget()
     ex.show()
     sys.exit(app.exec_())
-
-os.remove(map_file)
