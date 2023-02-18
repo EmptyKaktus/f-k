@@ -1,6 +1,7 @@
 import requests
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton
 from PyQt5.QtGui import QPixmap
+from PyQt5 import QtCore
 import sys
 import os
 
@@ -22,9 +23,9 @@ class MyWidget(QMainWindow):
         self.inputY.move(160, 470)
         self.inputY.resize(85, 30)
 
-        self.inputSPN = QLineEdit('0,0.003', self)
-        self.inputSPN.move(60, 530)
-        self.inputSPN.resize(100, 30)
+        self.inputZ = QLineEdit('15', self)
+        self.inputZ.move(60, 530)
+        self.inputZ.resize(100, 30)
 
         self.button_1 = QPushButton(self)
         self.button_1.move(180, 530)
@@ -37,7 +38,7 @@ class MyWidget(QMainWindow):
         self.getImage()
 
     def getImage(self):
-        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.inputX.text()}%{self.inputY.text()}&spn={self.inputSPN.text()}&l=map"
+        map_request = f"http://static-maps.yandex.ru/1.x/?ll={self.inputX.text()}%{self.inputY.text()}&z={self.inputZ.text()}&l=map"
         response = requests.get(map_request)
 
         if not response:
@@ -51,6 +52,15 @@ class MyWidget(QMainWindow):
             file.write(response.content)
         self.pixmap = QPixmap(self.map_file)
         self.image.setPixmap(self.pixmap)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_PageUp:
+            self.inputZ.setText(str(int(self.inputZ.text()) + 1))
+        if event.key() == QtCore.Qt.Key_PageDown:
+            if int(self.inputZ.text()) != 0:
+                self.inputZ.setText(str(int(self.inputZ.text()) - 1))
+        self.getImage()
+        event.accept()
 
     def closeEvent(self, event):
         os.remove(self.map_file)
